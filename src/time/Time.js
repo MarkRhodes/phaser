@@ -148,6 +148,9 @@ Phaser.Time = function (game) {
     */
     this._i = 0;
 
+    this.usePhysicsElapsedTime = false;
+    
+    this.frameRate = 1 / 60;
 };
 
 Phaser.Time.prototype = {
@@ -227,7 +230,12 @@ Phaser.Time.prototype = {
         this.timeToCall = this.game.math.max(0, 16 - (time - this.lastTime));
 
         this.elapsed = this.now - this.time;
-        this.physicsElapsed = this.elapsed / 1000;
+        
+        if (this.usePhysicsElapsedTime) {
+            this.physicsElapsed = this.elapsed / 1000;
+        } else {
+            this.physicsElapsed = this.frameRate;
+        }
 
         if (this.advancedTiming)
         {

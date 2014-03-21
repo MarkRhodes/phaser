@@ -48,6 +48,18 @@ Phaser.Physics.Arcade = function (game) {
     * @property {number} TILE_BIAS - A value added to the delta values during collision with tiles. Adjust this if you get tunnelling.
     */
     this.TILE_BIAS = 16;
+    
+    /**
+    * @property {number} frameRate - The frame rate the world will be stepped at. Defaults to 1 / 60, but you can change here. Also see useElapsedTime property.
+    * @default
+    */
+    this.frameRate =  1 / 60;
+
+    /**
+    * @property {boolean} useElapsedTime - If true the frameRate value will be ignored and instead p2 will step with the value of Game.Time.physicsElapsed, which is a delta time value.
+    * @default
+    */
+    this.useElapsedTime = false;
 
     /**
     * @property {Phaser.QuadTree} quadTree - The world QuadTree.
@@ -247,7 +259,9 @@ Phaser.Physics.Arcade.prototype = {
 
         this._velocityDelta = this.computeVelocity(0, body, body.angularVelocity, body.angularAcceleration, body.angularDrag, body.maxAngular) - body.angularVelocity;
         body.angularVelocity += this._velocityDelta;
-        body.rotation += (body.angularVelocity * this.game.time.physicsElapsed);
+        
+        var timeElapsed = this.useElapsedTime ? this.game.time.physicsElapsed : this.frameRate;
+        body.rotation += (body.angularVelocity * timeElapsed);
 
         body.velocity.x = this.computeVelocity(1, body, body.velocity.x, body.acceleration.x, body.drag.x, body.maxVelocity.x);
         body.velocity.y = this.computeVelocity(2, body, body.velocity.y, body.acceleration.y, body.drag.y, body.maxVelocity.y);
@@ -270,23 +284,24 @@ Phaser.Physics.Arcade.prototype = {
     computeVelocity: function (axis, body, velocity, acceleration, drag, max) {
 
         max = max || 10000;
-
+        var timeElapsed = this.useElapsedTime ? this.game.time.physicsElapsed : this.frameRate;
+        
         if (axis == 1 && body.allowGravity)
         {
-            velocity += (this.gravity.x + body.gravity.x) * this.game.time.physicsElapsed;
+            velocity += (this.gravity.x + body.gravity.x) * timeElapsed;
         }
         else if (axis == 2 && body.allowGravity)
         {
-            velocity += (this.gravity.y + body.gravity.y) * this.game.time.physicsElapsed;
+            velocity += (this.gravity.y + body.gravity.y) * timeElapsed;
         }
 
         if (acceleration)
         {
-            velocity += acceleration * this.game.time.physicsElapsed;
+            velocity += acceleration * timeElapsed;
         }
         else if (drag)
         {
-            this._drag = drag * this.game.time.physicsElapsed;
+            this._drag = drag * timeElapsed;
 
             if (velocity - this._drag > 0)
             {
