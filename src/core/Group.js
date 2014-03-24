@@ -103,12 +103,12 @@ Phaser.Group = function (game, parent, name, addToStage, enableBody, physicsBody
     * @property {boolean} enableBody - If true all Sprites created by, or added to this Group, will have a physics body enabled on them. Change the body type with `Group.physicsBodyType`.
     * @default
     */
-    this.enableBody = false;
+    this.enableBody = enableBody;
 
     /**
     * @property {boolean} enableBodyDebug - If true when a physics body is created (via Group.enableBody) it will create a physics debug object as well. Only works for P2 bodies.
     */
-    this.enableBodyDebug = enableBody;
+    this.enableBodyDebug = false;
 
     /**
     * @property {number} physicsBodyType - If Group.enableBody is true this is the type of physics body that is created on new Sprites. Phaser.Physics.ARCADE, Phaser.Physics.P2, Phaser.Physics.NINJA, etc.
@@ -133,10 +133,10 @@ Phaser.Group = function (game, parent, name, addToStage, enableBody, physicsBody
     * 7 = fixed to camera (0 = no, 1 = yes)
     * 8 = cursor index
     * 9 = sort order
-    * @property {Int16Array} _cache
+    * @property {Array} _cache
     * @private
     */
-    this._cache = new Int16Array([0, 0, 0, 0, 1, 0, 1, 0, 0, 0]);
+    this._cache = [ 0, 0, 0, 0, 1, 0, 1, 0, 0, 0 ];
 
 };
 
@@ -258,7 +258,7 @@ Phaser.Group.prototype.addAt = function (child, index) {
 */
 Phaser.Group.prototype.getAt = function (index) {
 
-    if (index < 0 || index > this.children.length)
+    if (index < 0 || index >= this.children.length)
     {
         return -1;
     }
@@ -561,6 +561,7 @@ Phaser.Group.prototype.getIndex = function (child) {
 * @method Phaser.Group#replace
 * @param {*} oldChild - The child in this Group that will be replaced.
 * @param {*} newChild - The child to be inserted into this Group.
+* @return {*} Returns the oldChild that was replaced within this Group.
 */
 Phaser.Group.prototype.replace = function (oldChild, newChild) {
 
@@ -579,9 +580,13 @@ Phaser.Group.prototype.replace = function (oldChild, newChild) {
             }
         }
 
-        this.removeChild(oldChild);
+        var temp = oldChild;
+
+        this.remove(temp);
 
         this.addAt(newChild, index);
+
+        return temp;
     }
 
 }
@@ -674,13 +679,16 @@ Phaser.Group.prototype.set = function (child, key, value, checkAlive, checkVisib
 
 /**
 * This function allows you to quickly set the same property across all children of this Group to a new value.
+* This call doesn't descend down children, so if you have a Group inside of this Group, the property will be set on the Group but not its children.
+* If you need that ability please see `Group.setAllChildren`.
+*
 * The operation parameter controls how the new value is assigned to the property, from simple replacement to addition and multiplication.
 *
 * @method Phaser.Group#setAll
 * @param {string} key - The property, as a string, to be set. For example: 'body.velocity.x'
 * @param {*} value - The value that will be set.
-* @param {boolean} [checkAlive=false] - If set then only children with alive=true will be updated.
-* @param {boolean} [checkVisible=false] - If set then only children with visible=true will be updated.
+* @param {boolean} [checkAlive=false] - If set then only children with alive=true will be updated. This includes any Groups that are children.
+* @param {boolean} [checkVisible=false] - If set then only children with visible=true will be updated. This includes any Groups that are children.
 * @param {number} [operation=0] - Controls how the value is assigned. A value of 0 replaces the value with the new one. A value of 1 adds it, 2 subtracts it, 3 multiplies it and 4 divides it.
 */
 Phaser.Group.prototype.setAll = function (key, value, checkAlive, checkVisible, operation) {
@@ -697,6 +705,45 @@ Phaser.Group.prototype.setAll = function (key, value, checkAlive, checkVisible, 
         if ((!checkAlive || (checkAlive && this.children[i].alive)) && (!checkVisible || (checkVisible && this.children[i].visible)))
         {
             this.setProperty(this.children[i], key, value, operation);
+        }
+    }
+
+}
+
+/**
+* This function allows you to quickly set the same property across all children of this Group, and any child Groups, to a new value.
+*
+* If this Group contains other Groups then the same property is set across their children as well, iterating down until it reaches the bottom.
+* Unlike with Group.setAll the property is NOT set on child Groups itself.
+*
+* The operation parameter controls how the new value is assigned to the property, from simple replacement to addition and multiplication.
+*
+* @method Phaser.Group#setAllChildren
+* @param {string} key - The property, as a string, to be set. For example: 'body.velocity.x'
+* @param {*} value - The value that will be set.
+* @param {boolean} [checkAlive=false] - If set then only children with alive=true will be updated. This includes any Groups that are children.
+* @param {boolean} [checkVisible=false] - If set then only children with visible=true will be updated. This includes any Groups that are children.
+* @param {number} [operation=0] - Controls how the value is assigned. A value of 0 replaces the value with the new one. A value of 1 adds it, 2 subtracts it, 3 multiplies it and 4 divides it.
+*/
+Phaser.Group.prototype.setAllChildren = function (key, value, checkAlive, checkVisible, operation) {
+
+    if (typeof checkAlive === 'undefined') { checkAlive = false; }
+    if (typeof checkVisible === 'undefined') { checkVisible = false; }
+
+    operation = operation || 0;
+
+    for (var i = 0, len = this.children.length; i < len; i++)
+    {
+        if ((!checkAlive || (checkAlive && this.children[i].alive)) && (!checkVisible || (checkVisible && this.children[i].visible)))
+        {
+            if (this.children[i] instanceof Phaser.Group)
+            {
+                this.children[i].setAllChildren(key, value, checkAlive, checkVisible, operation);
+            }
+            else
+            {
+                this.setProperty(this.children[i], key.split('.'), value, operation);
+            }
         }
     }
 
@@ -1420,12 +1467,14 @@ Phaser.Group.prototype.removeBetween = function (startIndex, endIndex) {
 *
 * @method Phaser.Group#destroy
 * @param {boolean} [destroyChildren=true] - Should every child of this Group have its destroy method called?
+* @param {boolean} [soft=false] - A 'soft destroy' (set to true) doesn't remove this Group from its parent or null the game reference. Set to false and it does.
 */
-Phaser.Group.prototype.destroy = function (destroyChildren) {
+Phaser.Group.prototype.destroy = function (destroyChildren, soft) {
 
     if (this.game === null) { return; }
 
     if (typeof destroyChildren === 'undefined') { destroyChildren = true; }
+    if (typeof soft === 'undefined') { soft = false; }
 
     if (destroyChildren)
     {
@@ -1446,13 +1495,16 @@ Phaser.Group.prototype.destroy = function (destroyChildren) {
         this.removeAll();
     }
 
-    this.parent.removeChild(this);
-
-    this.game = null;
-
-    this.exists = false;
-
     this.cursor = null;
+
+    if (!soft)
+    {
+        this.parent.removeChild(this);
+
+        this.game = null;
+
+        this.exists = false;
+    }
 
 }
 

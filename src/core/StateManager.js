@@ -278,19 +278,25 @@ Phaser.StateManager.prototype = {
             if (this.current)
             {
                 this.onShutDownCallback.call(this.callbackContext, this.game);
-            }
 
-            if (this._clearWorld)
-            {
                 this.game.tweens.removeAll();
 
-                this.game.world.destroy();
+                this.game.camera.reset();
+
+                this.game.input.reset(true);
 
                 this.game.physics.clear();
 
-                if (this._clearCache === true)
+                this.game.time.removeAll();
+
+                if (this._clearWorld)
                 {
-                    this.game.cache.destroy();
+                    this.game.world.shutdown();
+
+                    if (this._clearCache === true)
+                    {
+                        this.game.cache.destroy();
+                    }
                 }
             }
 

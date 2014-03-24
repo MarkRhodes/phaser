@@ -41,7 +41,7 @@ Phaser.TilemapLayer = function (game, tilemap, index, width, height) {
     * @property {HTMLCanvasElement} canvas - The canvas to which this TilemapLayer draws.
     */
     this.canvas = Phaser.Canvas.create(width, height, '', true);
-    
+
     /**
     * @property {CanvasRenderingContext2D} context - The 2d context of the canvas.
     */
@@ -62,7 +62,6 @@ Phaser.TilemapLayer = function (game, tilemap, index, width, height) {
     */
     this.textureFrame = new Phaser.Frame(0, 0, 0, width, height, 'tilemapLayer', game.rnd.uuid());
 
-    // Phaser.Sprite.call(this, this.game, 0, 0, this.texture, this.textureFrame);
     Phaser.Image.call(this, this.game, 0, 0, this.texture, this.textureFrame);
 
     /**
@@ -158,100 +157,33 @@ Phaser.TilemapLayer = function (game, tilemap, index, width, height) {
     this.rayStepRate = 4;
 
     /**
-    * @property {number} _cw - Local collision var.
+    * @property {object} _mc - Local map data and calculation cache.
     * @private 
     */
-    this._cw = tilemap.tileWidth;
+    this._mc = {
 
-    /**
-    * @property {number} _ch - Local collision var.
-    * @private 
-    */
-    this._ch = tilemap.tileHeight;
+        cw: tilemap.tileWidth,
+        ch: tilemap.tileHeight,
+        ga: 1,
+        dx: 0,
+        dy: 0,
+        dw: 0,
+        dh: 0,
+        tx: 0,
+        ty: 0,
+        tw: 0,
+        th: 0,
+        tl: 0,
+        maxX: 0,
+        maxY: 0,
+        startX: 0,
+        startY: 0,
+        x: 0,
+        y: 0,
+        prevX: 0,
+        prevY: 0
 
-    /**
-    * @property {number} _ga - Local render loop var to help avoid gc spikes.
-    * @private 
-    */
-    this._ga = 1;
-    
-    /**
-    * @property {number} _dx - Local render loop var to help avoid gc spikes.
-    * @private 
-    */
-    this._dx = 0;
-    
-    /**
-    * @property {number} _dy - Local render loop var to help avoid gc spikes.
-    * @private 
-    */
-    this._dy = 0;
-    
-    /**
-    * @property {number} _dw - Local render loop var to help avoid gc spikes.
-    * @private 
-    */
-    this._dw = 0;
-    
-    /**
-    * @property {number} _dh - Local render loop var to help avoid gc spikes.
-    * @private 
-    */
-    this._dh = 0;
-    
-    /**
-    * @property {number} _tx - Local render loop var to help avoid gc spikes.
-    * @private 
-    */
-    this._tx = 0;
-    
-    /**
-    * @property {number} _ty - Local render loop var to help avoid gc spikes.
-    * @private 
-    */
-    this._ty = 0;
-
-    /**
-    * @property {number} _tw - Local render loop var to help avoid gc spikes.
-    * @private 
-    */
-    this._tw = 0;
-
-    /**
-    * @property {number} _th - Local render loop var to help avoid gc spikes.
-    * @private 
-    */
-    this._th = 0;
-    
-    /**
-    * @property {number} _tl - Local render loop var to help avoid gc spikes.
-    * @private 
-    */
-    this._tl = 0;
-    
-    /**
-    * @property {number} _maxX - Local render loop var to help avoid gc spikes.
-    * @private 
-    */
-    this._maxX = 0;
-    
-    /**
-    * @property {number} _maxY - Local render loop var to help avoid gc spikes.
-    * @private 
-    */
-    this._maxY = 0;
-    
-    /**
-    * @property {number} _startX - Local render loop var to help avoid gc spikes.
-    * @private 
-    */
-    this._startX = 0;
-    
-    /**
-    * @property {number} _startY - Local render loop var to help avoid gc spikes.
-    * @private 
-    */
-    this._startY = 0;
+    };
 
     /**
     * @property {array} _results - Local render loop var to help avoid gc spikes.
@@ -259,36 +191,11 @@ Phaser.TilemapLayer = function (game, tilemap, index, width, height) {
     */
     this._results = [];
 
-    /**
-    * @property {number} _x - Private var.
-    * @private 
-    */
-    this._x = 0;
-
-    /**
-    * @property {number} _y - Private var.
-    * @private 
-    */
-    this._y = 0;
-
-    /**
-    * @property {number} _prevX - Private var.
-    * @private 
-    */
-    this._prevX = 0;
-
-    /**
-    * @property {number} _prevY - Private var.
-    * @private 
-    */
-    this._prevY = 0;
-
     this.updateMax();
 
 };
 
 Phaser.TilemapLayer.prototype = Object.create(Phaser.Image.prototype);
-// Phaser.TilemapLayer.prototype = Phaser.Utils.extend(true, Phaser.TilemapLayer.prototype, Phaser.Sprite.prototype, PIXI.Sprite.prototype);
 Phaser.TilemapLayer.prototype.constructor = Phaser.TilemapLayer;
 
 /**
@@ -299,7 +206,8 @@ Phaser.TilemapLayer.prototype.constructor = Phaser.TilemapLayer;
 */
 Phaser.TilemapLayer.prototype.postUpdate = function () {
 
-    // Phaser.Sprite.prototype.postUpdate.call(this);
+// console.log('layer pu');
+
 	Phaser.Image.prototype.postUpdate.call(this);
 	
     //  Stops you being able to auto-scroll the camera if it's not following a sprite
@@ -307,6 +215,19 @@ Phaser.TilemapLayer.prototype.postUpdate = function () {
     this.scrollY = this.game.camera.y * this.scrollFactorY;
 
     this.render();
+
+    //  Fixed to Camera?
+    if (this._cache[7] === 1)
+    {
+        this.position.x = (this.game.camera.view.x + this.cameraOffset.x) / this.game.camera.scale.x;
+        this.position.y = (this.game.camera.view.y + this.cameraOffset.y) / this.game.camera.scale.y;
+    }
+
+    //  Update any Children
+    // for (var i = 0, len = this.children.length; i < len; i++)
+    // {
+        // this.children[i].postUpdate();
+    // }
 
 }
 
@@ -343,7 +264,7 @@ Phaser.TilemapLayer.prototype._fixX = function(x) {
         return x;
     }
 
-    return this._x + (x - (this._x / this.scrollFactorX));
+    return this._mc.x + (x - (this._mc.x / this.scrollFactorX));
 
 }
 
@@ -363,7 +284,7 @@ Phaser.TilemapLayer.prototype._unfixX = function(x) {
         return x;
     }
 
-    return (this._x / this.scrollFactorX) + (x - this._x);
+    return (this._mc.x / this.scrollFactorX) + (x - this._mc.x);
 
 }
 
@@ -388,7 +309,7 @@ Phaser.TilemapLayer.prototype._fixY = function(y) {
         return y;
     }
 
-    return this._y + (y - (this._y / this.scrollFactorY));
+    return this._mc.y + (y - (this._mc.y / this.scrollFactorY));
 
 }
 
@@ -408,7 +329,7 @@ Phaser.TilemapLayer.prototype._unfixY = function(y) {
         return y;
     }
 
-    return (this._y / this.scrollFactorY) + (y - this._y);
+    return (this._mc.y / this.scrollFactorY) + (y - this._mc.y);
 
 }
 
@@ -539,17 +460,17 @@ Phaser.TilemapLayer.prototype.getTiles = function (x, y, width, height, collides
     }
 
     //  Convert the pixel values into tile coordinates
-    this._tx = this.game.math.snapToFloor(x, this._cw) / this._cw;
-    this._ty = this.game.math.snapToFloor(y, this._ch) / this._ch;
-    this._tw = (this.game.math.snapToCeil(width, this._cw) + this._cw) / this._cw;
-    this._th = (this.game.math.snapToCeil(height, this._ch) + this._ch) / this._ch;
+    this._mc.tx = this.game.math.snapToFloor(x, this._mc.cw) / this._mc.cw;
+    this._mc.ty = this.game.math.snapToFloor(y, this._mc.ch) / this._mc.ch;
+    this._mc.tw = (this.game.math.snapToCeil(width, this._mc.cw) + this._mc.cw) / this._mc.cw;
+    this._mc.th = (this.game.math.snapToCeil(height, this._mc.ch) + this._mc.ch) / this._mc.ch;
 
     //  This should apply the layer x/y here
     this._results.length = 0;
 
-    for (var wy = this._ty; wy < this._ty + this._th; wy++)
+    for (var wy = this._mc.ty; wy < this._mc.ty + this._mc.th; wy++)
     {
-        for (var wx = this._tx; wx < this._tx + this._tw; wx++)
+        for (var wx = this._mc.tx; wx < this._mc.tx + this._mc.tw; wx++)
         {
             if (this.layer.data[wy] && this.layer.data[wy][wx])
             {
@@ -572,19 +493,19 @@ Phaser.TilemapLayer.prototype.getTiles = function (x, y, width, height, collides
 */
 Phaser.TilemapLayer.prototype.updateMax = function () {
 
-    this._maxX = this.game.math.ceil(this.canvas.width / this.map.tileWidth) + 1;
-    this._maxY = this.game.math.ceil(this.canvas.height / this.map.tileHeight) + 1;
+    this._mc.maxX = this.game.math.ceil(this.canvas.width / this.map.tileWidth) + 1;
+    this._mc.maxY = this.game.math.ceil(this.canvas.height / this.map.tileHeight) + 1;
 
     if (this.layer)
     {
-        if (this._maxX > this.layer.width)
+        if (this._mc.maxX > this.layer.width)
         {
-            this._maxX = this.layer.width;
+            this._mc.maxX = this.layer.width;
         }
 
-        if (this._maxY > this.layer.height)
+        if (this._mc.maxY > this.layer.height)
         {
-            this._maxY = this.layer.height;
+            this._mc.maxY = this.layer.height;
         }
     }
 
@@ -609,14 +530,14 @@ Phaser.TilemapLayer.prototype.render = function () {
         return;
     }
 
-    this._prevX = this._dx;
-    this._prevY = this._dy;
+    this._mc.prevX = this._mc.dx;
+    this._mc.prevY = this._mc.dy;
 
-    this._dx = -(this._x - (this._startX * this.map.tileWidth));
-    this._dy = -(this._y - (this._startY * this.map.tileHeight));
+    this._mc.dx = -(this._mc.x - (this._mc.startX * this.map.tileWidth));
+    this._mc.dy = -(this._mc.y - (this._mc.startY * this.map.tileHeight));
 
-    this._tx = this._dx;
-    this._ty = this._dy;
+    this._mc.tx = this._mc.dx;
+    this._mc.ty = this._mc.dy;
 
     this.context.clearRect(0, 0, this.canvas.width, this.canvas.height);
 
@@ -630,38 +551,38 @@ Phaser.TilemapLayer.prototype.render = function () {
         this.context.globalAlpha = this.debugAlpha;
     }
 
-    for (var y = this._startY, lenY = this._startY + this._maxY; y < lenY; y++)
+    for (var y = this._mc.startY, lenY = this._mc.startY + this._mc.maxY; y < lenY; y++)
     {
         this._column = this.layer.data[y];
 
-        for (var x = this._startX, lenX = this._startX + this._maxX; x < lenX; x++)
+        for (var x = this._mc.startX, lenX = this._mc.startX + this._mc.maxX; x < lenX; x++)
         {
             if (this._column[x])
             {
                 tile = this._column[x];
 
-                set = this.map.tilesets[this.map.tiles[tile.index][2]]
+                set = this.map.tilesets[this.map.tiles[tile.index][2]];
 
                 if (this.debug === false && tile.alpha !== this.context.globalAlpha)
                 {
                     this.context.globalAlpha = tile.alpha;
                 }
 
-                set.draw(this.context, Math.floor(this._tx), Math.floor(this._ty), tile.index);
+                set.draw(this.context, Math.floor(this._mc.tx), Math.floor(this._mc.ty), tile.index);
 
                 if (tile.debug)
                 {
                     this.context.fillStyle = 'rgba(0, 255, 0, 0.4)';
-                    this.context.fillRect(Math.floor(this._tx), Math.floor(this._ty), this.map.tileWidth, this.map.tileHeight);
+                    this.context.fillRect(Math.floor(this._mc.tx), Math.floor(this._mc.ty), this.map.tileWidth, this.map.tileHeight);
                 }
             }
 
-            this._tx += this.map.tileWidth;
+            this._mc.tx += this.map.tileWidth;
 
         }
 
-        this._tx = this._dx;
-        this._ty += this.map.tileHeight;
+        this._mc.tx = this._mc.dx;
+        this._mc.ty += this.map.tileHeight;
 
     }
 
@@ -691,64 +612,64 @@ Phaser.TilemapLayer.prototype.render = function () {
 */
 Phaser.TilemapLayer.prototype.renderDebug = function () {
 
-    this._tx = this._dx;
-    this._ty = this._dy;
+    this._mc.tx = this._mc.dx;
+    this._mc.ty = this._mc.dy;
 
     this.context.strokeStyle = this.debugColor;
     this.context.fillStyle = this.debugFillColor;
 
-    for (var y = this._startY, lenY = this._startY + this._maxY; y < lenY; y++)
+    for (var y = this._mc.startY, lenY = this._mc.startY + this._mc.maxY; y < lenY; y++)
     {
         this._column = this.layer.data[y];
 
-        for (var x = this._startX, lenX = this._startX + this._maxX; x < lenX; x++)
+        for (var x = this._mc.startX, lenX = this._mc.startX + this._mc.maxX; x < lenX; x++)
         {
             var tile = this._column[x];
 
             if (tile && (tile.faceTop || tile.faceBottom || tile.faceLeft || tile.faceRight))
             {
-                this._tx = Math.floor(this._tx);
+                this._mc.tx = Math.floor(this._mc.tx);
 
                 if (this.debugFill)
                 {
-                    this.context.fillRect(this._tx, this._ty, this._cw, this._ch);
+                    this.context.fillRect(this._mc.tx, this._mc.ty, this._mc.cw, this._mc.ch);
                 }
 
                 this.context.beginPath();
 
                 if (tile.faceTop)
                 {
-                    this.context.moveTo(this._tx, this._ty);
-                    this.context.lineTo(this._tx + this._cw, this._ty);
+                    this.context.moveTo(this._mc.tx, this._mc.ty);
+                    this.context.lineTo(this._mc.tx + this._mc.cw, this._mc.ty);
                 }
 
                 if (tile.faceBottom)
                 {
-                    this.context.moveTo(this._tx, this._ty + this._ch);
-                    this.context.lineTo(this._tx + this._cw, this._ty + this._ch);
+                    this.context.moveTo(this._mc.tx, this._mc.ty + this._mc.ch);
+                    this.context.lineTo(this._mc.tx + this._mc.cw, this._mc.ty + this._mc.ch);
                 }
 
                 if (tile.faceLeft)
                 {
-                    this.context.moveTo(this._tx, this._ty);
-                    this.context.lineTo(this._tx, this._ty + this._ch);
+                    this.context.moveTo(this._mc.tx, this._mc.ty);
+                    this.context.lineTo(this._mc.tx, this._mc.ty + this._mc.ch);
                 }
 
                 if (tile.faceRight)
                 {
-                    this.context.moveTo(this._tx + this._cw, this._ty);
-                    this.context.lineTo(this._tx + this._cw, this._ty + this._ch);
+                    this.context.moveTo(this._mc.tx + this._mc.cw, this._mc.ty);
+                    this.context.lineTo(this._mc.tx + this._mc.cw, this._mc.ty + this._mc.ch);
                 }
 
                 this.context.stroke();
             }
 
-            this._tx += this.map.tileWidth;
+            this._mc.tx += this.map.tileWidth;
 
         }
 
-        this._tx = this._dx;
-        this._ty += this.map.tileHeight;
+        this._mc.tx = this._mc.dx;
+        this._mc.ty += this.map.tileHeight;
 
     }
 
@@ -761,31 +682,30 @@ Phaser.TilemapLayer.prototype.renderDebug = function () {
 Object.defineProperty(Phaser.TilemapLayer.prototype, "scrollX", {
     
     get: function () {
-        return this._x;
+        return this._mc.x;
     },
 
     set: function (value) {
 
-        // if (value !== this._x && value >= 0 && this.layer && this.layer.widthInPixels > this.width)
-        if (value !== this._x && value >= 0 && this.layer.widthInPixels > this.width)
+        if (value !== this._mc.x && value >= 0 && this.layer.widthInPixels > this.width)
         {
-            this._x = value;
+            this._mc.x = value;
     
-            if (this._x > (this.layer.widthInPixels - this.width))
+            if (this._mc.x > (this.layer.widthInPixels - this.width))
             {
-                this._x = this.layer.widthInPixels - this.width;
+                this._mc.x = this.layer.widthInPixels - this.width;
             }
 
-            this._startX = this.game.math.floor(this._x / this.map.tileWidth);
+            this._mc.startX = this.game.math.floor(this._mc.x / this.map.tileWidth);
 
-            if (this._startX < 0)
+            if (this._mc.startX < 0)
             {
-                this._startX = 0;
+                this._mc.startX = 0;
             }
 
-            if (this._startX + this._maxX > this.layer.width)
+            if (this._mc.startX + this._mc.maxX > this.layer.width)
             {
-                this._startX = this.layer.width - this._maxX;
+                this._mc.startX = this.layer.width - this._mc.maxX;
             }
 
             this.dirty = true;
@@ -802,31 +722,30 @@ Object.defineProperty(Phaser.TilemapLayer.prototype, "scrollX", {
 Object.defineProperty(Phaser.TilemapLayer.prototype, "scrollY", {
     
     get: function () {
-        return this._y;
+        return this._mc.y;
     },
 
     set: function (value) {
 
-        // if (value !== this._y && value >= 0 && this.layer && this.heightInPixels > this.renderHeight)
-        if (value !== this._y && value >= 0 && this.layer.heightInPixels > this.height)
+        if (value !== this._mc.y && value >= 0 && this.layer.heightInPixels > this.height)
         {
-            this._y = value;
+            this._mc.y = value;
 
-            if (this._y > (this.layer.heightInPixels - this.height))
+            if (this._mc.y > (this.layer.heightInPixels - this.height))
             {
-                this._y = this.layer.heightInPixels - this.height;
+                this._mc.y = this.layer.heightInPixels - this.height;
             }
 
-            this._startY = this.game.math.floor(this._y / this.map.tileHeight);
+            this._mc.startY = this.game.math.floor(this._mc.y / this.map.tileHeight);
 
-            if (this._startY < 0)
+            if (this._mc.startY < 0)
             {
-                this._startY = 0;
+                this._mc.startY = 0;
             }
 
-            if (this._startY + this._maxY > this.layer.height)
+            if (this._mc.startY + this._mc.maxY > this.layer.height)
             {
-                this._startY = this.layer.height - this._maxY;
+                this._mc.startY = this.layer.height - this._mc.maxY;
             }
 
             this.dirty = true;
@@ -843,12 +762,12 @@ Object.defineProperty(Phaser.TilemapLayer.prototype, "scrollY", {
 Object.defineProperty(Phaser.TilemapLayer.prototype, "collisionWidth", {
     
     get: function () {
-        return this._cw;
+        return this._mc.cw;
     },
 
     set: function (value) {
 
-        this._cw = value;
+        this._mc.cw = value;
 
         this.dirty = true;
 
@@ -863,12 +782,12 @@ Object.defineProperty(Phaser.TilemapLayer.prototype, "collisionWidth", {
 Object.defineProperty(Phaser.TilemapLayer.prototype, "collisionHeight", {
     
     get: function () {
-        return this._ch;
+        return this._mc.ch;
     },
 
     set: function (value) {
 
-        this._ch = value;
+        this._mc.ch = value;
 
         this.dirty = true;
 

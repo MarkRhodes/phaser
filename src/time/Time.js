@@ -82,6 +82,11 @@ Phaser.Time = function (game) {
     this.physicsElapsed = 0;
 
     /**
+    * @property {number} deltaCap - If you need to cap the delta timer, set the value here.
+    */
+    this.deltaCap = 0;
+
+    /**
     * @property {number} frames - The number of frames record in the last second. Only calculated if Time.advancedTiming is true.
     */
     this.frames = 0;
@@ -188,7 +193,7 @@ Phaser.Time.prototype = {
     },
 
     /**
-    * Remove all Timer objects, regardless of their state.
+    * Remove all Timer objects, regardless of their state. Also clears all Timers from the Time.events timer.
     *
     * @method Phaser.Time#removeAll
     */
@@ -200,6 +205,8 @@ Phaser.Time.prototype = {
         }
 
         this._timers = [];
+
+        this.events.removeAll();
 
     },
 
@@ -235,6 +242,11 @@ Phaser.Time.prototype = {
             this.physicsElapsed = this.elapsed / 1000;
         } else {
             this.physicsElapsed = this.frameRate;
+        }
+
+        if (this.deltaCap > 0 && this.physicsElapsed > this.deltaCap)
+        {
+            this.physicsElapsed = this.deltaCap;
         }
 
         if (this.advancedTiming)

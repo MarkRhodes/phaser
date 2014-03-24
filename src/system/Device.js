@@ -18,13 +18,6 @@ Phaser.Device = function (game) {
     */
     this.game = game;
 
-    /**
-    * An optional 'fix' for the horrendous Android stock browser bug https://code.google.com/p/android/issues/detail?id=39247
-    * @property {boolean} patchAndroidClearRectBug - Description.
-    * @default
-    */
-    this.patchAndroidClearRectBug = false;
-
     //  Operating System
 
     /**
@@ -160,6 +153,12 @@ Phaser.Device = function (game) {
     * @default
     */
     this.vibration = false;
+
+    /**
+    * @property {boolean} getUserMedia - Does the device support the getUserMedia API?
+    * @default
+    */
+    this.getUserMedia = false;
 
     /**
     * @property {boolean} quirksMode - Is the browser running in strict mode (false) or quirks mode? (true)
@@ -468,7 +467,7 @@ Phaser.Device.prototype = {
 
         this.quirksMode = (document.compatMode === 'CSS1Compat') ? false : true;
 
-
+        this.getUserMedia = !!(navigator.getUserMedia || navigator.webkitGetUserMedia || navigator.mozGetUserMedia || navigator.msGetUserMedia);
 
     },
 
@@ -579,12 +578,12 @@ Phaser.Device.prototype = {
         {
             this.silk = true;
         }
-        else if (/Trident\/(\d+\.\d+); rv:(\d+\.\d+)/.test(ua))
+        else if (/Trident\/(\d+\.\d+)(.*)rv:(\d+\.\d+)/.test(ua))
         {
             this.ie = true;
             this.trident = true;
             this.tridentVersion = parseInt(RegExp.$1, 10);
-            this.ieVersion = parseInt(RegExp.$2, 10);
+            this.ieVersion = parseInt(RegExp.$3, 10);
         }
 
         // WebApp mode in iOS
@@ -753,6 +752,9 @@ Phaser.Device.prototype = {
 
     /**
     * Check whether the console is open.
+    * Note that this only works in Firefox with Firebug and earlier versions of Chrome.
+    * It used to work in Chrome, but then they removed the ability: http://src.chromium.org/viewvc/blink?view=revision&revision=151136
+    * 
     * @method Phaser.Device#isConsoleOpen
     * @return {boolean} True if the browser dev console is open.
     */
@@ -773,7 +775,10 @@ Phaser.Device.prototype = {
                 console.clear();
             }
 
-            return console['profiles'].length > 0;
+            if (console['profiles'])
+            {
+                return console['profiles'].length > 0;
+            }
         }
 
         return false;

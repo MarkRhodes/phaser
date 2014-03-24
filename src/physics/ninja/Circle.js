@@ -219,7 +219,7 @@ Phaser.Physics.Ninja.Circle.prototype = {
         }
         else
         {
-            dx = (this.pos.x + this.radius) - this.system.bounds.width;
+            dx = (this.pos.x + this.radius) - this.system.bounds.right;
 
             if (0 < dx)
             {
@@ -235,7 +235,7 @@ Phaser.Physics.Ninja.Circle.prototype = {
         }
         else
         {
-            dy = (this.pos.y + this.radius) - this.system.bounds.height;
+            dy = (this.pos.y + this.radius) - this.system.bounds.bottom;
 
             if (0 < dy)
             {
@@ -2606,6 +2606,16 @@ Phaser.Physics.Ninja.Circle.prototype = {
         }
         
         return Phaser.Physics.Ninja.Circle.COL_NONE;
+    },
+
+    /**
+    * Destroys this Circle's reference to Body and System
+    *
+    * @method Phaser.Physics.Ninja.Circle#destroy
+    */
+    destroy: function() {
+        this.body = null;
+        this.system = null;
     }
 
 }

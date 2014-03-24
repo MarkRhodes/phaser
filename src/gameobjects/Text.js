@@ -29,6 +29,10 @@ Phaser.Text = function (game, x, y, text, style) {
     {
         text = ' ';
     }
+    else
+    {
+        text = text.toString();
+    }
 
     /**
     * @property {Phaser.Game} game - A reference to the currently running Game.
@@ -124,10 +128,10 @@ Phaser.Text = function (game, x, y, text, style) {
     * 5 = outOfBoundsFired (0 = no, 1 = yes)
     * 6 = exists (0 = no, 1 = yes)
     * 7 = fixed to camera (0 = no, 1 = yes)
-    * @property {Int16Array} _cache
+    * @property {Array} _cache
     * @private
     */
-    this._cache = new Int16Array([0, 0, 0, 0, 1, 0, 1, 0]);
+    this._cache = [ 0, 0, 0, 0, 1, 0, 1, 0 ];
 
 };
 

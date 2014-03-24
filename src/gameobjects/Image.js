@@ -115,10 +115,10 @@ Phaser.Image = function (game, x, y, key, frame) {
     * 5 = outOfBoundsFired (0 = no, 1 = yes)
     * 6 = exists (0 = no, 1 = yes)
     * 7 = fixed to camera (0 = no, 1 = yes)
-    * @property {Int16Array} _cache
+    * @property {Array} _cache
     * @private
     */
-    this._cache = new Int16Array([0, 0, 0, 0, 1, 0, 1, 0]);
+    this._cache = [ 0, 0, 0, 0, 1, 0, 1, 0 ];
 
 };
 
@@ -184,7 +184,7 @@ Phaser.Image.prototype.update = function() {
 */
 Phaser.Image.prototype.postUpdate = function() {
 
-    if (this.key instanceof Phaser.BitmapData && this.key._dirty)
+    if (this.key instanceof Phaser.BitmapData)
     {
         this.key.render();
     }
@@ -225,7 +225,7 @@ Phaser.Image.prototype.loadTexture = function (key, frame) {
     }
     else if (key instanceof Phaser.BitmapData)
     {
-        this.key = key.key;
+        this.key = key;
         this.setTexture(key.texture);
         return;
     }

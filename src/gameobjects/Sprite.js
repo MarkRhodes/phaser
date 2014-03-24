@@ -165,10 +165,10 @@ Phaser.Sprite = function (game, x, y, key, frame) {
     * 5 = outOfBoundsFired (0 = no, 1 = yes)
     * 6 = exists (0 = no, 1 = yes)
     * 7 = fixed to camera (0 = no, 1 = yes)
-    * @property {Int16Array} _cache
+    * @property {Array} _cache
     * @private
     */
-    this._cache = new Int16Array([0, 0, 0, 0, 1, 0, 1, 0]);
+    this._cache = [ 0, 0, 0, 0, 1, 0, 1, 0 ];
 
     /**
     * @property {Phaser.Rectangle} _bounds - Internal cache var.
@@ -190,7 +190,7 @@ Phaser.Sprite.prototype.constructor = Phaser.Sprite;
 */
 Phaser.Sprite.prototype.preUpdate = function() {
 
-    if (this._cache[4] === 1)
+    if (this._cache[4] === 1 && this.exists)
     {
         this.world.setTo(this.parent.position.x + this.position.x, this.parent.position.y + this.position.y);
         this.worldTransform.tx = this.world.x;
@@ -198,12 +198,13 @@ Phaser.Sprite.prototype.preUpdate = function() {
         this._cache[0] = this.world.x;
         this._cache[1] = this.world.y;
         this._cache[2] = this.rotation;
-        this._cache[4] = 0;
 
-        if (this.exists && this.body)
+        if (this.body)
         {
             this.body.preUpdate();
         }
+
+        this._cache[4] = 0;
 
         return false;
     }
@@ -248,6 +249,7 @@ Phaser.Sprite.prototype.preUpdate = function() {
         if (this._cache[5] === 1 && this.game.world.bounds.intersects(this._bounds))
         {
             this._cache[5] = 0;
+            this.events.onEnterBounds.dispatch(this);
         }
         else if (this._cache[5] === 0 && !this.game.world.bounds.intersects(this._bounds))
         {
@@ -306,7 +308,7 @@ Phaser.Sprite.prototype.update = function() {
 */
 Phaser.Sprite.prototype.postUpdate = function() {
 
-    if (this.key instanceof Phaser.BitmapData && this.key._dirty)
+    if (this.key instanceof Phaser.BitmapData)
     {
         this.key.render();
     }
@@ -352,7 +354,7 @@ Phaser.Sprite.prototype.loadTexture = function (key, frame) {
     }
     else if (key instanceof Phaser.BitmapData)
     {
-        this.key = key.key;
+        this.key = key;
         this.setTexture(key.texture);
         return;
     }
@@ -632,6 +634,8 @@ Phaser.Sprite.prototype.reset = function(x, y, health) {
     {
         this.body.reset(x, y, false, false);
     }
+
+    this._cache[4] = 1;
 
     return this;
     

@@ -104,6 +104,7 @@ Phaser.Physics.prototype = {
         {
             //  If Arcade isn't specified, we create it automatically if we can
             this.arcade = new Phaser.Physics.Arcade(this.game);
+            this.game.time.deltaCap = 0.2;
         }
 
         if (this.config.hasOwnProperty('ninja') && this.config['ninja'] === true && Phaser.Physics.hasOwnProperty('Ninja'))
@@ -131,15 +132,15 @@ Phaser.Physics.prototype = {
     */
     startSystem: function (system) {
 
-        if (system === Phaser.Physics.ARCADE && this.arcade === null)
+        if (system === Phaser.Physics.ARCADE)
         {
             this.arcade = new Phaser.Physics.Arcade(this.game);
         }
-        else if (system === Phaser.Physics.P2JS && this.p2 === null)
+        else if (system === Phaser.Physics.P2JS)
         {
             this.p2 = new Phaser.Physics.P2(this.game, this.config);
         }
-        if (system === Phaser.Physics.NINJA && this.ninja === null)
+        if (system === Phaser.Physics.NINJA)
         {
             this.ninja = new Phaser.Physics.Ninja(this.game);
         }
@@ -233,6 +234,11 @@ Phaser.Physics.prototype = {
     * @protected
     */
     setBoundsToWorld: function () {
+
+        if (this.arcade)
+        {
+            this.arcade.setBoundsToWorld();
+        }
 
         if (this.ninja)
         {

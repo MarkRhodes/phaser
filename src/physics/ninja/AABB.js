@@ -321,7 +321,7 @@ Phaser.Physics.Ninja.AABB.prototype = {
         }
         else
         {
-            dx = (this.pos.x + this.xw) - this.system.bounds.width;
+            dx = (this.pos.x + this.xw) - this.system.bounds.right;
 
             if (0 < dx)
             {
@@ -337,7 +337,7 @@ Phaser.Physics.Ninja.AABB.prototype = {
         }
         else
         {
-            dy = (this.pos.y + this.yw) - this.system.bounds.height;
+            dy = (this.pos.y + this.yw) - this.system.bounds.bottom;
 
             if (0 < dy)
             {
@@ -1002,6 +1002,16 @@ Phaser.Physics.Ninja.AABB.prototype = {
 
         return Phaser.Physics.Ninja.AABB.COL_NONE;
 		
+    },
+
+    /**
+    * Destroys this AABB's reference to Body and System
+    *
+    * @method Phaser.Physics.Ninja.AABB#destroy
+    */
+    destroy: function() {
+        this.body = null;
+        this.system = null;
     }
 
 }
