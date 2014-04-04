@@ -225,7 +225,7 @@ Phaser.Time.prototype = {
         {
             this.time = this.now;
             this._justResumed = false;
-    
+
             this.events.resume();
 
             for (var i = 0; i < this._timers.length; i++)
@@ -303,7 +303,7 @@ Phaser.Time.prototype = {
     * @private
     */
     gamePaused: function () {
-        
+
         this._pauseStarted = this.now;
 
         this.events.pause();

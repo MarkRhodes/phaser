@@ -192,12 +192,6 @@ Phaser.Physics.Arcade.Body = function (sprite) {
     this.speed = 0;
 
     /**
-    * @property {boolean} skipQuadTree - If the Body is an irregular shape you can set this to true to avoid it being added to any QuadTrees.
-    * @default
-    this.skipQuadTree = false;
-    */
-
-    /**
     * @property {number} facing - A const reference to the direction the Body is traveling or facing.
     * @default
     */
@@ -293,6 +287,17 @@ Phaser.Physics.Arcade.Body = function (sprite) {
     this.tilePadding = new Phaser.Point();
 
     /**
+    * @property {number} phaser - Is this Body in a preUpdate or postUpdate state?
+    */
+    this.phase = 0;
+
+    /**
+    * @property {boolean} _reset - Internal cache var.
+    * @private
+    */
+    this._reset = true;
+
+    /**
     * @property {number} _sx - Internal cache var.
     * @private
     */
@@ -341,10 +346,8 @@ Phaser.Physics.Arcade.Body.prototype = {
             this._sy = asy;
             this.center.setTo(this.position.x + this.halfWidth, this.position.y + this.halfHeight);
 
-            return true;
+            this._reset = true;
         }
-
-        return false;
 
     },
 
@@ -355,6 +358,8 @@ Phaser.Physics.Arcade.Body.prototype = {
     * @protected
     */
     preUpdate: function () {
+
+        this.phase = 1;
 
         //  Store and reset collision flags
         this.wasTouching.none = this.touching.none;
@@ -376,13 +381,15 @@ Phaser.Physics.Arcade.Body.prototype = {
 
         this.embedded = false;
 
+        this.updateBounds();
+
         this.position.x = (this.sprite.world.x - (this.sprite.anchor.x * this.width)) + this.offset.x;
         this.position.y = (this.sprite.world.y - (this.sprite.anchor.y * this.height)) + this.offset.y;
         this.rotation = this.sprite.angle;
 
         this.preRotation = this.rotation;
 
-        if (this.updateBounds() || this.sprite._cache[4] === 1)
+        if (this._reset || this.sprite._cache[4] === 1)
         {
             this.prev.x = this.position.x;
             this.prev.y = this.position.y;
@@ -412,6 +419,11 @@ Phaser.Physics.Arcade.Body.prototype = {
             }
         }
 
+        this._dx = this.deltaX();
+        this._dy = this.deltaY();
+
+        this._reset = false;
+
     },
 
     /**
@@ -421,6 +433,8 @@ Phaser.Physics.Arcade.Body.prototype = {
     * @protected
     */
     postUpdate: function () {
+
+        this.phase = 2;
 
         if (this.deltaX() < 0)
         {
@@ -459,7 +473,7 @@ Phaser.Physics.Arcade.Body.prototype = {
 
             if (this.deltaMax.y !== 0 && this._dy !== 0)
             {
-                if (this._dy < 0 && this._dx < -this.deltaMax.y)
+                if (this._dy < 0 && this._dy < -this.deltaMax.y)
                 {
                     this._dy = -this.deltaMax.y;
                 }
@@ -669,7 +683,7 @@ Phaser.Physics.Arcade.Body.prototype = {
 * @readonly
 */
 Object.defineProperty(Phaser.Physics.Arcade.Body.prototype, "bottom", {
-    
+
     get: function () {
         return this.position.y + this.height;
     }
@@ -682,7 +696,7 @@ Object.defineProperty(Phaser.Physics.Arcade.Body.prototype, "bottom", {
 * @readonly
 */
 Object.defineProperty(Phaser.Physics.Arcade.Body.prototype, "right", {
-    
+
     get: function () {
         return this.position.x + this.width;
     }
@@ -694,12 +708,13 @@ Object.defineProperty(Phaser.Physics.Arcade.Body.prototype, "right", {
 * @property {number} x - The x position.
 */
 Object.defineProperty(Phaser.Physics.Arcade.Body.prototype, "x", {
-    
+
     get: function () {
         return this.position.x;
     },
 
     set: function (value) {
+
         this.position.x = value;
     }
 
@@ -710,13 +725,15 @@ Object.defineProperty(Phaser.Physics.Arcade.Body.prototype, "x", {
 * @property {number} y - The y position.
 */
 Object.defineProperty(Phaser.Physics.Arcade.Body.prototype, "y", {
-    
+
     get: function () {
         return this.position.y;
     },
 
     set: function (value) {
+
         this.position.y = value;
+
     }
 
 });
@@ -747,7 +764,7 @@ Phaser.Physics.Arcade.Body.render = function (context, body, filled, color) {
         context.strokeRect(body.position.x - body.game.camera.x, body.position.y - body.game.camera.y, body.width, body.height);
     }
 
-}
+};
 
 /**
 * Render Sprite Body Physics Data as text.
@@ -761,13 +778,12 @@ Phaser.Physics.Arcade.Body.render = function (context, body, filled, color) {
 Phaser.Physics.Arcade.Body.renderBodyInfo = function (debug, body) {
 
     debug.line('x: ' + body.x.toFixed(2), 'y: ' + body.y.toFixed(2), 'width: ' + body.width, 'height: ' + body.height);
-    // debug.line('velocity x: ' + body.velocity.x.toFixed(2), 'y: ' + body.velocity.y.toFixed(2), 'deltaX: ' + body.deltaX().toFixed(2), 'deltaY: ' + body.deltaY().toFixed(2));
-    debug.line('velocity x: ' + body.velocity.x.toFixed(2), 'y: ' + body.velocity.y.toFixed(2), 'new velocity x: ' + body.newVelocity.x.toFixed(2), 'y: ' + body.newVelocity.y.toFixed(2));
+    debug.line('velocity x: ' + body.velocity.x.toFixed(2), 'y: ' + body.velocity.y.toFixed(2), 'deltaX: ' + body._dx.toFixed(2), 'deltaY: ' + body._dy.toFixed(2));
     debug.line('acceleration x: ' + body.acceleration.x.toFixed(2), 'y: ' + body.acceleration.y.toFixed(2), 'speed: ' + body.speed.toFixed(2), 'angle: ' + body.angle.toFixed(2));
     debug.line('gravity x: ' + body.gravity.x, 'y: ' + body.gravity.y, 'bounce x: ' + body.bounce.x.toFixed(2), 'y: ' + body.bounce.y.toFixed(2));
     debug.line('touching left: ' + body.touching.left, 'right: ' + body.touching.right, 'up: ' + body.touching.up, 'down: ' + body.touching.down);
     debug.line('blocked left: ' + body.blocked.left, 'right: ' + body.blocked.right, 'up: ' + body.blocked.up, 'down: ' + body.blocked.down);
 
-}
+};
 
 Phaser.Physics.Arcade.Body.prototype.constructor = Phaser.Physics.Arcade.Body;
