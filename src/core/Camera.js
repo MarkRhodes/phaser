@@ -268,8 +268,8 @@ Phaser.Camera.prototype = {
         }
         else
         {
-            var x = this._followX ? this.target.x : this.view.x;
-            var y = this._followY ? this.target.y : this.view.y;
+            var x = this._followX ? this.target.x : this.x;
+            var y = this._followY ? this.target.y : this.y;
             this.focusOnXY(x, y);
         }
 
