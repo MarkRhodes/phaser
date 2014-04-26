@@ -270,7 +270,7 @@ Phaser.Cache.prototype = {
     * @param {object} atlasData  - Texture atlas frames data.
     * @param {number} format - The format of the texture atlas.
     */
-    addTextureAtlas: function (key, url, data, atlasData, format) {
+    addTextureAtlas: function (key, url, data, atlasData, format, textureScale) {
 
         this._images[key] = { url: url, data: data, spriteSheet: true };
 
@@ -283,7 +283,8 @@ Phaser.Cache.prototype = {
         }
         else if (format == Phaser.Loader.TEXTURE_ATLAS_JSON_HASH)
         {
-            this._images[key].frameData = Phaser.AnimationParser.JSONDataHash(this.game, atlasData, key);
+            console.log('HERE WE GO!!: ' + textureScale);
+            this._images[key].frameData = Phaser.AnimationParser.JSONDataHash(this.game, atlasData, key, textureScale);
         }
         else if (format == Phaser.Loader.TEXTURE_ATLAS_XML_STARLING)
         {

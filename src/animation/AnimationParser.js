@@ -171,8 +171,10 @@ Phaser.AnimationParser = {
     * @param {string} cacheKey - The Game.Cache asset key of the texture image.
     * @return {Phaser.FrameData} A FrameData object containing the parsed frames.
     */
-    JSONDataHash: function (game, json, cacheKey) {
-
+    JSONDataHash: function (game, json, cacheKey, textureScale) {
+    
+        if (typeof textureScale === 'undefined') { textureScale = 1; }
+    
         //  Malformed?
         if (!json['frames'])
         {
@@ -195,19 +197,19 @@ Phaser.AnimationParser = {
 
             newFrame = data.addFrame(new Phaser.Frame(
                 i,
-                frames[key].frame.x,
-                frames[key].frame.y,
-                frames[key].frame.w,
-                frames[key].frame.h,
+                frames[key].frame.x * textureScale,
+                frames[key].frame.y * textureScale,
+                frames[key].frame.w * textureScale,
+                frames[key].frame.h * textureScale,
                 key,
                 uuid
             ));
 
             PIXI.TextureCache[uuid] = new PIXI.Texture(PIXI.BaseTextureCache[cacheKey], {
-                x: frames[key].frame.x,
-                y: frames[key].frame.y,
-                width: frames[key].frame.w,
-                height: frames[key].frame.h
+                x: frames[key].frame.x * textureScale,
+                y: frames[key].frame.y * textureScale,
+                width: frames[key].frame.w * textureScale,
+                height: frames[key].frame.h * textureScale
             });
 
             if (frames[key].trimmed)

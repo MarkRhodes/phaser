@@ -700,9 +700,9 @@ Phaser.Loader.prototype = {
     * @param {object} [atlasData] - A JSON or XML data object. You don't need this if the data is being loaded from a URL.
     * @return {Phaser.Loader} This Loader instance.
     */
-    atlasJSONHash: function (key, textureURL, atlasURL, atlasData) {
+    atlasJSONHash: function (key, textureURL, atlasURL, atlasData, textureScale) {
 
-        return this.atlas(key, textureURL, atlasURL, atlasData, Phaser.Loader.TEXTURE_ATLAS_JSON_HASH);
+        return this.atlas(key, textureURL, atlasURL, atlasData, Phaser.Loader.TEXTURE_ATLAS_JSON_HASH, textureScale);
 
     },
 
@@ -733,16 +733,17 @@ Phaser.Loader.prototype = {
     * @param {number} [format] - A value describing the format of the data, the default is Phaser.Loader.TEXTURE_ATLAS_JSON_ARRAY.
     * @return {Phaser.Loader} This Loader instance.
     */
-    atlas: function (key, textureURL, atlasURL, atlasData, format) {
+    atlas: function (key, textureURL, atlasURL, atlasData, format, textureScale) {
 
         if (typeof atlasURL === "undefined") { atlasURL = null; }
         if (typeof atlasData === "undefined") { atlasData = null; }
         if (typeof format === "undefined") { format = Phaser.Loader.TEXTURE_ATLAS_JSON_ARRAY; }
-
+        if (typeof textureScale === "undefined") { textureScale = 1; }
+        
         //  A URL to a json/xml file has been given
         if (atlasURL)
         {
-            this.addToFileList('textureatlas', key, textureURL, { atlasURL: atlasURL, format: format });
+            this.addToFileList('textureatlas', key, textureURL, { atlasURL: atlasURL, format: format, textureScale: textureScale });
         }
         else
         {
@@ -794,7 +795,7 @@ Phaser.Loader.prototype = {
                     break;
             }
 
-            this.addToFileList('textureatlas', key, textureURL, { atlasURL: null, atlasData: atlasData, format: format });
+            this.addToFileList('textureatlas', key, textureURL, { atlasURL: atlasURL, format: format, textureScale: textureScale });
 
         }
 
@@ -866,6 +867,55 @@ Phaser.Loader.prototype = {
 
     },
 
+    //Scales the given image by the given scale..
+    _scaleImage: function (image, scale) {
+        //Adapted from http://jsfiddle.net/alnitak/j8YTe/..
+
+        var srcCanvas = document.createElement('canvas');
+        srcCanvas.width = image.width;
+        srcCanvas.height = image.height;
+
+        var srcCtx = srcCanvas.getContext('2d');
+        srcCtx.drawImage(image, 0, 0);
+        var srcData = srcCtx.getImageData(0, 0, image.width, image.height).data;
+
+        var sw = image.width * scale;
+        var sh = image.height * scale;
+
+        var dstCanvas = document.createElement('canvas');
+        dstCanvas.width = sw;
+        dstCanvas.height = sh;
+        var dstCtx = dstCanvas.getContext('2d');
+
+        var dstImgdata = dstCtx.createImageData(sw, sh);
+        var dstData = dstImgdata.data;
+
+        var srcP = 0;
+        var dstP = 0;
+        for (var y = 0; y < image.height; ++y) {
+            for (var i = 0; i < scale; ++i) {
+                for (var x = 0; x < image.width; ++x) {
+                    var srcP = 4 * (y * image.width + x);
+                    for (var j = 0; j < scale; ++j) {
+                        var tmp = srcP;
+                        dstData[dstP++] = srcData[tmp++];
+                        dstData[dstP++] = srcData[tmp++];
+                        dstData[dstP++] = srcData[tmp++];
+                        dstData[dstP++] = srcData[tmp++];
+                    }
+                }
+            }
+        }
+
+        dstCtx.putImageData(dstImgdata, 0, 0);
+            
+        //Need to return new one to prevent load event firing again..
+        var scaledImage = new Image();
+        scaledImage.src = dstCanvas.toDataURL('image/png');
+
+        return scaledImage;
+    },
+    
     /**
     * Load files. Private method ONLY used by loader.
     *
@@ -893,6 +943,9 @@ Phaser.Loader.prototype = {
                 file.data = new Image();
                 file.data.name = file.key;
                 file.data.onload = function () {
+                    if (file.textureScale && file.textureScale !== 1) {
+                        file.data = _this._scaleImage(file.data, file.textureScale);
+                    }
                     return _this.fileComplete(_this._fileIndex);
                 };
                 file.data.onerror = function () {
@@ -1265,7 +1318,7 @@ Phaser.Loader.prototype = {
         }
         else
         {
-            this.game.cache.addTextureAtlas(file.key, file.url, file.data, data, file.format);
+            this.game.cache.addTextureAtlas(file.key, file.url, file.data, data, file.format, file.textureScale);
         }
 
         this.nextFile(index, true);
