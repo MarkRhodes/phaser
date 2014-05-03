@@ -124,6 +124,8 @@ Phaser.Loader = function (game) {
     * @property {Phaser.Signal} onLoadComplete - This event is dispatched when the final file in the load queue has either loaded or failed.
     */
     this.onLoadComplete = new Phaser.Signal();
+    
+    this.preventCaching = false;
 
 };
 
@@ -280,6 +282,16 @@ Phaser.Loader.prototype = {
 
     },
 
+    _appendTimestamp: function (url) {
+        if (url.indexOf('?') >= 0) {
+            url += '&';
+        } else {
+            url += '?';
+        }
+        url += 'timestamp=' + Date.now();
+        return url;
+    },
+    
     /**
     * Internal function that adds a new entry to the file list. Do not call directly.
     *
@@ -291,7 +303,10 @@ Phaser.Loader.prototype = {
     * @protected
     */
     addToFileList: function (type, key, url, properties) {
-
+ 
+        if (this.preventCaching) {
+            url = this._appendTimestamp(url);
+        }
         var entry = {
             type: type,
             key: key,
@@ -300,7 +315,7 @@ Phaser.Loader.prototype = {
             error: false,
             loaded: false
         };
-
+     
         if (typeof properties !== "undefined")
         {
             for (var prop in properties)
@@ -328,6 +343,10 @@ Phaser.Loader.prototype = {
     */
     replaceInFileList: function (type, key, url, properties) {
 
+        if (this.preventCaching) {
+            url = this._appendTimestamp(url);
+        }
+    
         var entry = {
             type: type,
             key: key,
