@@ -283,7 +283,6 @@ Phaser.Cache.prototype = {
         }
         else if (format == Phaser.Loader.TEXTURE_ATLAS_JSON_HASH)
         {
-            console.log('HERE WE GO!!: ' + textureScale);
             this._images[key].frameData = Phaser.AnimationParser.JSONDataHash(this.game, atlasData, key, textureScale);
         }
         else if (format == Phaser.Loader.TEXTURE_ATLAS_XML_STARLING)
