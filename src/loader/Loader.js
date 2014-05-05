@@ -1232,7 +1232,12 @@ Phaser.Loader.prototype = {
                 {
                     //  Load the JSON or XML before carrying on with the next file
                     loadNext = false;
-                    this._xhr.open("GET", this.baseURL + file.atlasURL, true);
+                    var atlasURL = this.baseURL + file.atlasURL;
+                    if (this.preventCaching) {
+                        atlasURL = this._appendTimestamp(atlasURL);
+                    }
+                    
+                    this._xhr.open("GET", atlasURL, true);
                     this._xhr.responseType = "text";
 
                     if (file.format == Phaser.Loader.TEXTURE_ATLAS_JSON_ARRAY || file.format == Phaser.Loader.TEXTURE_ATLAS_JSON_HASH)
@@ -1269,7 +1274,12 @@ Phaser.Loader.prototype = {
                 {
                     //  Load the XML before carrying on with the next file
                     loadNext = false;
-                    this._xhr.open("GET", this.baseURL + file.xmlURL, true);
+                    
+                    var xmlURL = this.baseURL + file.xmlURL;
+                    if (this.preventCaching) {
+                        xmlURL = this._appendTimestamp(xmlURL);
+                    }
+                    this._xhr.open("GET", xmlURL, true);
                     this._xhr.responseType = "text";
 
                     this._xhr.onload = function () {
