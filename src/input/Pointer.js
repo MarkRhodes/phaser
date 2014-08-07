@@ -26,6 +26,42 @@ Phaser.Pointer = function (game, id) {
     this.id = id;
 
     /**
+    * @property {number} type - The const type of this object.
+    * @readonly
+    */
+    this.type = Phaser.POINTER;
+
+    /**
+    * @property {boolean} exists - A Pointer object that exists is allowed to be checked for physics collisions and overlaps.
+    * @default
+    */
+    this.exists = true;
+
+    /**
+    * @property {number} identifier - The identifier property of the Pointer as set by the DOM event when this Pointer is started.
+    * @default
+    */
+    this.identifier = 0;
+
+    /**
+    * @property {number} pointerId - The pointerId property of the Pointer as set by the DOM event when this Pointer is started. The browser can and will recycle this value.
+    * @default
+    */
+    this.pointerId = null;
+
+    /**
+    * @property {any} target - The target property of the Pointer as set by the DOM event when this Pointer is started.
+    * @default
+    */
+    this.target = null;
+
+    /**
+    * @property {any} button - The button property of the Pointer as set by the DOM event when this Pointer is started.
+    * @default
+    */
+    this.button = null;
+
+    /**
     * @property {boolean} _holdSent - Local private variable to store the status of dispatching a hold event.
     * @private
     * @default
@@ -39,68 +75,84 @@ Phaser.Pointer = function (game, id) {
     this._history = [];
 
     /**
-    * @property {number} _lastDrop - Local private variable storing the time at which the next history drop should occur.
+    * @property {number} _nextDrop - Local private variable storing the time at which the next history drop should occur.
     * @private
-    * @default
     */
     this._nextDrop = 0;
 
     /**
     * @property {boolean} _stateReset - Monitor events outside of a state reset loop.
     * @private
-    * @default
     */
     this._stateReset = false;
 
     /**
-    * @property {boolean} withinGame - true if the Pointer is within the game area, otherwise false.
+    * @property {boolean} withinGame - true if the Pointer is over the game canvas, otherwise false.
     */
     this.withinGame = false;
 
     /**
-    * @property {number} clientX - The horizontal coordinate of point relative to the viewport in pixels, excluding any scroll offset.
-    * @default
+    * @property {number} clientX - The horizontal coordinate of the Pointer within the application's client area at which the event occurred (as opposed to the coordinates within the page).
     */
     this.clientX = -1;
 
     /**
-    * @property {number} clientY - The vertical coordinate of point relative to the viewport in pixels, excluding any scroll offset.
-    * @default
+    * @property {number} clientY - The vertical coordinate of the Pointer within the application's client area at which the event occurred (as opposed to the coordinates within the page).
     */
     this.clientY = -1;
 
     /**
-    * @property {number} pageX - The horizontal coordinate of point relative to the viewport in pixels, including any scroll offset.
-    * @default
+    * @property {number} pageX - The horizontal coordinate of the Pointer relative to whole document.
     */
     this.pageX = -1;
 
     /**
-    * @property {number} pageY - The vertical coordinate of point relative to the viewport in pixels, including any scroll offset.
-    * @default
+    * @property {number} pageY - The vertical coordinate of the Pointer relative to whole document.
     */
     this.pageY = -1;
 
     /**
-    * @property {number} screenX - The horizontal coordinate of point relative to the screen in pixels.
-    * @default
+    * @property {number} screenX - The horizontal coordinate of the Pointer relative to the screen.
     */
     this.screenX = -1;
 
     /**
-    * @property {number} screenY - The vertical coordinate of point relative to the screen in pixels.
-    * @default
+    * @property {number} screenY - The vertical coordinate of the Pointer relative to the screen.
     */
     this.screenY = -1;
 
     /**
-    * @property {number} x - The horizontal coordinate of point relative to the game element. This value is automatically scaled based on game size.
+    * @property {number} rawMovementX - The horizontal raw relative movement of the Pointer in pixels since last event.
+    * @default
+    */
+    this.rawMovementX = 0;
+
+    /**
+    * @property {number} rawMovementY - The vertical raw relative movement of the Pointer in pixels since last event.
+    * @default
+    */
+    this.rawMovementY = 0;
+
+    /**
+    * @property {number} movementX - The horizontal processed relative movement of the Pointer in pixels since last event.
+    * @default
+    */
+    this.movementX = 0;
+
+    /**
+    * @property {number} movementY - The vertical processed relative movement of the Pointer in pixels since last event.
+    * @default
+    */
+    this.movementY = 0;
+
+    /**
+    * @property {number} x - The horizontal coordinate of the Pointer. This value is automatically scaled based on the game scale.
     * @default
     */
     this.x = -1;
 
     /**
-    * @property {number} y - The vertical coordinate of point relative to the game element. This value is automatically scaled based on game size.
+    * @property {number} y - The vertical coordinate of the Pointer. This value is automatically scaled based on the game scale.
     * @default
     */
     this.y = -1;
@@ -148,7 +200,7 @@ Phaser.Pointer = function (game, id) {
     this.totalTouches = 0;
 
     /**
-    * @property {number} msSinceLastClick - The number of miliseconds since the last click.
+    * @property {number} msSinceLastClick - The number of milliseconds since the last click or touch event.
     * @default
     */
     this.msSinceLastClick = Number.MAX_VALUE;
@@ -199,9 +251,14 @@ Phaser.Pointer.prototype = {
     /**
     * Called when the Pointer is pressed onto the touchscreen.
     * @method Phaser.Pointer#start
-    * @param {Any} event
+    * @param {any} event - The DOM event from the browser.
     */
     start: function (event) {
+
+        if (event['pointerId'])
+        {
+            this.pointerId = event.pointerId;
+        }
 
         this.identifier = event.identifier;
         this.target = event.target;
@@ -293,6 +350,7 @@ Phaser.Pointer.prototype = {
 
     /**
     * Called when the Pointer is moved.
+    * 
     * @method Phaser.Pointer#move
     * @param {MouseEvent|PointerEvent|TouchEvent} event - The event passed up from the input handler.
     * @param {boolean} [fromClick=false] - Was this called from the click event?
@@ -320,6 +378,15 @@ Phaser.Pointer.prototype = {
         this.screenX = event.screenX;
         this.screenY = event.screenY;
 
+        if (this.isMouse && this.game.input.mouse.locked && !fromClick)
+        {
+            this.rawMovementX = event.movementX || event.mozMovementX || event.webkitMovementX || 0;
+            this.rawMovementY = event.movementY || event.mozMovementY || event.webkitMovementY || 0;
+
+            this.movementX += this.rawMovementX;
+            this.movementY += this.rawMovementY;
+        }
+
         this.x = (this.pageX - this.game.stage.offset.x) * this.game.input.scale.x;
         this.y = (this.pageY - this.game.stage.offset.y) * this.game.input.scale.y;
 
@@ -327,7 +394,7 @@ Phaser.Pointer.prototype = {
         this.circle.x = this.x;
         this.circle.y = this.y;
 
-        if (this.game.input.multiInputOverride == Phaser.Input.MOUSE_OVERRIDES_TOUCH || this.game.input.multiInputOverride == Phaser.Input.MOUSE_TOUCH_COMBINE || (this.game.input.multiInputOverride == Phaser.Input.TOUCH_OVERRIDES_MOUSE && this.game.input.currentPointers === 0))
+        if (this.game.input.multiInputOverride === Phaser.Input.MOUSE_OVERRIDES_TOUCH || this.game.input.multiInputOverride === Phaser.Input.MOUSE_TOUCH_COMBINE || (this.game.input.multiInputOverride === Phaser.Input.TOUCH_OVERRIDES_MOUSE && this.game.input.currentPointers === 0))
         {
             this.game.input.activePointer = this;
             this.game.input.x = this.x;
@@ -337,15 +404,25 @@ Phaser.Pointer.prototype = {
             this.game.input.circle.y = this.game.input.y;
         }
 
+        this.withinGame = this.game.scale.bounds.contains(this.pageX, this.pageY);
+
         //  If the game is paused we don't process any target objects or callbacks
         if (this.game.paused)
         {
             return this;
         }
 
+        //  DEPRECATED - Soon to be removed
         if (this.game.input.moveCallback)
         {
             this.game.input.moveCallback.call(this.game.input.moveCallbackContext, this, this.x, this.y);
+        }
+
+        var i = this.game.input.moveCallbacks.length;
+
+        while (i--)
+        {
+            this.game.input.moveCallbacks[i].callback.call(this.game.input.moveCallbacks[i].context, this, this.x, this.y);
         }
 
         //  Easy out if we're dragging something and it still exists
@@ -358,40 +435,81 @@ Phaser.Pointer.prototype = {
 
             return this;
         }
+        else if (this.game.input.interactiveItems.total > 0)
+        {
+            this.processInteractiveObjects(fromClick);
+        }
+
+        return this;
+
+    },
+
+    /**
+    * Process all interactive objects to find out which ones were updated in the recent Pointer move.
+    * 
+    * @method Phaser.Pointer#processInteractiveObjects
+    * @protected
+    * @param {boolean} [fromClick=false] - Was this called from the click event?
+    */
+    processInteractiveObjects: function (fromClick) {
+
+        this.game.input.interactiveItems.setAll('checked', false);
 
         //  Work out which object is on the top
         this._highestRenderOrderID = Number.MAX_SAFE_INTEGER;
         this._highestRenderObject = null;
         this._highestInputPriorityID = -1;
 
-        //  Run through the list
-        if (this.game.input.interactiveItems.total > 0)
-        {
-            var currentNode = this.game.input.interactiveItems.first;
+        //  First pass gets all objects that the pointer is over that DON'T use pixelPerfect checks and get the highest ID
+        //  We know they'll be valid for input detection but not which is the top just yet
 
-            do
+        var currentNode = this.game.input.interactiveItems.first;
+
+        do
+        {
+            if (currentNode && currentNode.validForInput(this._highestInputPriorityID, this._highestRenderOrderID, false))
             {
-                //  If the object is using pixelPerfect checks, or has a higher InputManager.PriorityID OR if the priority ID is the same as the current highest AND it has a higher renderOrderID, then set it to the top
-                if (currentNode && currentNode.validForInput(this._highestInputPriorityID, this._highestRenderOrderID))
+                //  Flag it as checked so we don't re-scan it on the next phase
+                currentNode.checked = true;
+
+                if ((fromClick && currentNode.checkPointerDown(this, true)) || (!fromClick && currentNode.checkPointerOver(this, true)))
                 {
-                    if ((!fromClick && currentNode.checkPointerOver(this)) || (fromClick && currentNode.checkPointerDown(this)))
-                    {
-                        this._highestRenderOrderID = currentNode.sprite._cache[3]; // renderOrderID
-                        this._highestInputPriorityID = currentNode.priorityID;
-                        this._highestRenderObject = currentNode;
-                    }
+                    this._highestRenderOrderID = currentNode.sprite._cache[3]; // renderOrderID
+                    this._highestInputPriorityID = currentNode.priorityID;
+                    this._highestRenderObject = currentNode;
                 }
-                currentNode = this.game.input.interactiveItems.next;
             }
-            while (currentNode !== null);
+            currentNode = this.game.input.interactiveItems.next;
         }
+        while (currentNode !== null);
+
+        //  Then in the second sweep we process ONLY the pixel perfect ones that are checked and who have a higher ID
+        //  because if their ID is lower anyway then we can just automatically discount them
+
+        var currentNode = this.game.input.interactiveItems.first;
+
+        do
+        {
+            if (currentNode && !currentNode.checked && currentNode.validForInput(this._highestInputPriorityID, this._highestRenderOrderID, true))
+            {
+                if ((fromClick && currentNode.checkPointerDown(this, false)) || (!fromClick && currentNode.checkPointerOver(this, false)))
+                {
+                    this._highestRenderOrderID = currentNode.sprite._cache[3]; // renderOrderID
+                    this._highestInputPriorityID = currentNode.priorityID;
+                    this._highestRenderObject = currentNode;
+                }
+            }
+            currentNode = this.game.input.interactiveItems.next;
+        }
+        while (currentNode !== null);
+
+        //  Now we know the top-most item (if any) we can process it
 
         if (this._highestRenderObject === null)
         {
             //  The pointer isn't currently over anything, check if we've got a lingering previous target
             if (this.targetObject)
             {
-                // console.log("The pointer isn't currently over anything, check if we've got a lingering previous target");
                 this.targetObject._pointerOutHandler(this);
                 this.targetObject = null;
             }
@@ -401,18 +519,15 @@ Phaser.Pointer.prototype = {
             if (this.targetObject === null)
             {
                 //  And now set the new one
-                // console.log('And now set the new one');
                 this.targetObject = this._highestRenderObject;
                 this._highestRenderObject._pointerOverHandler(this);
             }
             else
             {
                 //  We've got a target from the last update
-                // console.log("We've got a target from the last update");
                 if (this.targetObject === this._highestRenderObject)
                 {
                     //  Same target as before, so update it
-                    // console.log("Same target as before, so update it");
                     if (this._highestRenderObject.update(this) === false)
                     {
                         this.targetObject = null;
@@ -421,7 +536,6 @@ Phaser.Pointer.prototype = {
                 else
                 {
                     //  The target has changed, so tell the old one we've left it
-                    // console.log("The target has changed, so tell the old one we've left it");
                     this.targetObject._pointerOutHandler(this);
 
                     //  And now set the new one
@@ -431,12 +545,11 @@ Phaser.Pointer.prototype = {
             }
         }
 
-        return this;
-
     },
 
     /**
     * Called when the Pointer leaves the target area.
+    *
     * @method Phaser.Pointer#leave
     * @param {MouseEvent|PointerEvent|TouchEvent} event - The event passed up from the input handler.
     */
@@ -449,6 +562,7 @@ Phaser.Pointer.prototype = {
 
     /**
     * Called when the Pointer leaves the touchscreen.
+    *
     * @method Phaser.Pointer#stop
     * @param {MouseEvent|PointerEvent|TouchEvent} event - The event passed up from the input handler.
     */
@@ -462,7 +576,7 @@ Phaser.Pointer.prototype = {
 
         this.timeUp = this.game.time.now;
 
-        if (this.game.input.multiInputOverride == Phaser.Input.MOUSE_OVERRIDES_TOUCH || this.game.input.multiInputOverride == Phaser.Input.MOUSE_TOUCH_COMBINE || (this.game.input.multiInputOverride == Phaser.Input.TOUCH_OVERRIDES_MOUSE && this.game.input.currentPointers === 0))
+        if (this.game.input.multiInputOverride === Phaser.Input.MOUSE_OVERRIDES_TOUCH || this.game.input.multiInputOverride === Phaser.Input.MOUSE_TOUCH_COMBINE || (this.game.input.multiInputOverride === Phaser.Input.TOUCH_OVERRIDES_MOUSE && this.game.input.currentPointers === 0))
         {
             this.game.input.onUp.dispatch(this, event);
 
@@ -494,6 +608,8 @@ Phaser.Pointer.prototype = {
         this.withinGame = false;
         this.isDown = false;
         this.isUp = true;
+        this.pointerId = null;
+        this.identifier = null;
         
         this.positionUp.setTo(this.x, this.y);
         
@@ -553,6 +669,7 @@ Phaser.Pointer.prototype = {
             this.active = false;
         }
 
+        this.pointerId = null;
         this.identifier = null;
         this.isDown = false;
         this.isUp = true;
@@ -567,6 +684,17 @@ Phaser.Pointer.prototype = {
         }
 
         this.targetObject = null;
+
+    },
+
+    /**
+     * Resets the movementX and movementY properties. Use in your update handler after retrieving the values.
+     * @method Phaser.Pointer#resetMovement
+     */
+    resetMovement: function() {
+
+        this.movementX = 0;
+        this.movementY = 0;
 
     }
 

@@ -59,7 +59,7 @@ Phaser.AnimationParser = {
         //  Zero or smaller than frame sizes?
         if (width === 0 || height === 0 || width < frameWidth || height < frameHeight || total === 0)
         {
-            console.warn("Phaser.AnimationParser.spriteSheet: width/height zero or width/height < given frameWidth/frameHeight");
+            console.warn("Phaser.AnimationParser.spriteSheet: '" + key + "'s width/height zero or width/height < given frameWidth/frameHeight");
             return null;
         }
 
@@ -72,6 +72,7 @@ Phaser.AnimationParser = {
         {
             var uuid = game.rnd.uuid();
 
+            //  uuid needed?
             data.addFrame(new Phaser.Frame(i, x, y, frameWidth, frameHeight, '', uuid));
 
             PIXI.TextureCache[uuid] = new PIXI.Texture(PIXI.BaseTextureCache[key], {
@@ -152,10 +153,7 @@ Phaser.AnimationParser = {
                     frames[i].spriteSourceSize.w,
                     frames[i].spriteSourceSize.h
                 );
-
-                PIXI.TextureCache[uuid].trim = new Phaser.Rectangle(frames[i].spriteSourceSize.x, frames[i].spriteSourceSize.y, frames[i].sourceSize.w, frames[i].sourceSize.h);
             }
-
         }
 
         return data;
@@ -171,9 +169,9 @@ Phaser.AnimationParser = {
     * @param {string} cacheKey - The Game.Cache asset key of the texture image.
     * @return {Phaser.FrameData} A FrameData object containing the parsed frames.
     */
-    JSONDataHash: function (game, json, cacheKey, textureScale) {
+    JSONDataHash: function (game, json, cacheKey, scaleFactor) {
     
-        if (typeof textureScale === 'undefined') { textureScale = 1; }
+        if (typeof scaleFactor === 'undefined') { scaleFactor = 1; }
     
         //  Malformed?
         if (!json['frames'])
@@ -197,19 +195,19 @@ Phaser.AnimationParser = {
 
             newFrame = data.addFrame(new Phaser.Frame(
                 i,
-                frames[key].frame.x * textureScale,
-                frames[key].frame.y * textureScale,
-                frames[key].frame.w * textureScale,
-                frames[key].frame.h * textureScale,
+                frames[key].frame.x * scaleFactor,
+                frames[key].frame.y * scaleFactor,
+                frames[key].frame.w * scaleFactor,
+                frames[key].frame.h * scaleFactor,
                 key,
                 uuid
             ));
 
             PIXI.TextureCache[uuid] = new PIXI.Texture(PIXI.BaseTextureCache[cacheKey], {
-                x: frames[key].frame.x * textureScale,
-                y: frames[key].frame.y * textureScale,
-                width: frames[key].frame.w * textureScale,
-                height: frames[key].frame.h * textureScale
+                x: frames[key].frame.x * scaleFactor,
+                y: frames[key].frame.y * scaleFactor,
+                width: frames[key].frame.w * scaleFactor,
+                height: frames[key].frame.h * scaleFactor
             });
 
             if (frames[key].trimmed)
@@ -223,8 +221,6 @@ Phaser.AnimationParser = {
                     frames[key].spriteSourceSize.w,
                     frames[key].spriteSourceSize.h
                 );
-
-                PIXI.TextureCache[uuid].trim = new Phaser.Rectangle(frames[key].spriteSourceSize.x, frames[key].spriteSourceSize.y, frames[key].sourceSize.w, frames[key].sourceSize.h);
             }
 
             i++;
@@ -300,13 +296,10 @@ Phaser.AnimationParser = {
                 width: width,
                 height: height
             });
-
-            //  Trimmed?
+                        //  Trimmed?
             if (frameX !== null || frameY !== null)
             {
                 newFrame.setTrim(true, width, height, frameX, frameY, frameWidth, frameHeight);
-
-                PIXI.TextureCache[uuid].trim = new Phaser.Rectangle(frameX, frameY, width, height);
             }
         }
 

@@ -58,7 +58,7 @@ Phaser.Camera = function (game, id, x, y, width, height) {
     this.bounds = new Phaser.Rectangle(x, y, width, height);
 
     /**
-    * @property {Phaser.Rectangle} deadzone - Moving inside this Rectangle will not cause camera moving.
+    * @property {Phaser.Rectangle} deadzone - Moving inside this Rectangle will not cause the camera to move.
     */
     this.deadzone = null;
 
@@ -78,16 +78,6 @@ Phaser.Camera = function (game, id, x, y, width, height) {
     * @default
     */
     this.target = null;
-    
-    /**
-    * @property {boolean} followX - Whether to follow the target on the x-axis or not.
-    */
-    this._followX = true;
-    
-    /**
-    * @property {boolean} followY - Whether to follow the target on the y-axis or not.
-    */
-    this._followY = true;
 
     /**
     * @property {number} edge - Edge property.
@@ -140,15 +130,11 @@ Phaser.Camera.prototype = {
     * @param {Phaser.Sprite|Phaser.Image|Phaser.Text} target - The object you want the camera to track. Set to null to not follow anything.
     * @param {number} [style] - Leverage one of the existing "deadzone" presets. If you use a custom deadzone, ignore this parameter and manually specify the deadzone after calling follow().
     */
-    follow: function (target, style, followOnXAxis, followOnYAxis) {
+    follow: function (target, style) {
 
         if (typeof style === "undefined") { style = Phaser.Camera.FOLLOW_LOCKON; }
-        if (typeof followOnXAxis === "undefined") { followOnXAxis = true; }
-        if (typeof followOnYAxis === "undefined") { followOnYAxis = true; }
-              
+
         this.target = target;
-        this._followX = followOnXAxis;
-        this._followY = followOnYAxis;
 
         var helper;
 
@@ -245,43 +231,32 @@ Phaser.Camera.prototype = {
 
         if (this.deadzone)
         {
-            if (this._followX) {
-                this._edge = this.target.x - this.deadzone.x;
-        
-                if (this.view.x > this._edge)
-                {
-                    this.view.x = this._edge;
-                }
+            this._edge = this.target.x - this.view.x;
 
-                this._edge = this.target.x + this.target.width - this.deadzone.x - this.deadzone.width;
-
-                if (this.view.x < this._edge)
-                {
-                    this.view.x = this._edge;
-                }
+            if (this._edge < this.deadzone.left)
+            {
+                this.view.x = this.target.x - this.deadzone.left;
             }
-            
-            if (this._followY) {
-                this._edge = this.target.y - this.deadzone.y;
+            else if (this._edge > this.deadzone.right)
+            {
+                this.view.x = this.target.x - this.deadzone.right;
+            }
 
-                if (this.view.y > this._edge)
-                {
-                    this.view.y = this._edge;
-                }
+            this._edge = this.target.y - this.view.y;
 
-                this._edge = this.target.y + this.target.height - this.deadzone.y - this.deadzone.height;
-
-                if (this.view.y < this._edge)
-                {
-                    this.view.y = this._edge;
-                }
+            if (this._edge < this.deadzone.top)
+            {
+                this.view.y = this.target.y - this.deadzone.top;
+            }
+            else if (this._edge > this.deadzone.bottom)
+            {
+                this.view.y = this.target.y - this.deadzone.bottom;
             }
         }
         else
         {
-            var x = this._followX ? this.target.x : this.x;
-            var y = this._followY ? this.target.y : this.y;
-            this.focusOnXY(x, y);
+            this.view.x = this.target.x - this.view.halfWidth;
+            this.view.y = this.target.y - this.view.halfHeight;
         }
 
     },
