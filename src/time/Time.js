@@ -19,6 +19,8 @@ Phaser.Time = function (game) {
     */
     this.game = game;
 
+    this.fakeToFrameRate = true;
+    
     /**
     * @property {number} time - Game time counter. If you need a value for in-game calculation please use Phaser.Time.now instead.
     * @protected
@@ -235,6 +237,10 @@ Phaser.Time.prototype = {
     */
     update: function (time) {
 
+        if (this.fakeToFrameRate) {
+            time = this.now + 17; //ms in 60fps.. 
+        }
+    
         this.now = time;
 
         this.timeToCall = this.game.math.max(0, 16 - (time - this.lastTime));
