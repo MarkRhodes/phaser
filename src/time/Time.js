@@ -157,10 +157,6 @@ Phaser.Time = function (game) {
     * @private
     */
     this._i = 0;
-
-    this.usePhysicsElapsedTime = false;
-    
-    this.frameRate = 1 / 60;
 };
 
 Phaser.Time.prototype = {
@@ -251,18 +247,12 @@ Phaser.Time.prototype = {
             //  For some reason the time between now and the last time the game was updated was larger than our timeCap
             //  This can happen if the Stage.disableVisibilityChange is true and you swap tabs, which makes the raf pause.
             //  In this case we'll drop to some default values to stop the game timers going nuts.
-            this.elapsed = 1 / 60;
+            this.elapsed = 1000 / 60; //ms in 60fps
         }
 
         //  Calculate physics elapsed, ensure it's > 0, use 1/60 as a fallback
         this.physicsElapsed = this.elapsed / 1000 || 1 / 60;
         
-        if (this.usePhysicsElapsedTime) {
-            this.physicsElapsed = this.elapsed / 1000 || 1 / 60;
-        } else {
-            this.physicsElapsed = this.frameRate;
-        }
-
         if (this.deltaCap > 0 && this.physicsElapsed > this.deltaCap)
         {
             this.physicsElapsed = this.deltaCap;

@@ -57,18 +57,6 @@ Phaser.Physics.Arcade = function (game) {
     this.TILE_BIAS = 16;
     
     /**
-    * @property {number} frameRate - The frame rate the world will be stepped at. Defaults to 1 / 60, but you can change here. Also see useElapsedTime property.
-    * @default
-    */
-    this.frameRate =  1 / 60;
-
-    /**
-    * @property {boolean} useElapsedTime - If true the frameRate value will be ignored and instead p2 will step with the value of Game.Time.physicsElapsed, which is a delta time value.
-    * @default
-    */
-    this.useElapsedTime = false;
-
-    /**
     * @property {boolean} forceX - If true World.separate will always separate on the X axis before Y. Otherwise it will check gravity totals first.
     */
     this.forceX = false;
@@ -157,6 +145,8 @@ Phaser.Physics.Arcade = function (game) {
     * @private
     */
     this._dy = 0;
+    
+    this.speedFactor = 1;
 
 };
 
@@ -273,7 +263,7 @@ Phaser.Physics.Arcade.prototype = {
         this._velocityDelta = this.computeVelocity(0, body, body.angularVelocity, body.angularAcceleration, body.angularDrag, body.maxAngular) - body.angularVelocity;
         body.angularVelocity += this._velocityDelta;
         
-        var timeElapsed = this.useElapsedTime ? this.game.time.physicsElapsed : this.frameRate;
+        var timeElapsed = this.game.time.physicsElapsed;
         body.rotation += (body.angularVelocity * timeElapsed);
 
         body.velocity.x = this.computeVelocity(1, body, body.velocity.x, body.acceleration.x, body.drag.x, body.maxVelocity.x);
@@ -295,9 +285,9 @@ Phaser.Physics.Arcade.prototype = {
     * @return {number} The altered Velocity value.
     */
     computeVelocity: function (axis, body, velocity, acceleration, drag, max) {
-
+        var timeElapsed = this.game.time.physicsElapsed * this.speedFactor;
+        
         max = max || 10000;
-        var timeElapsed = this.useElapsedTime ? this.game.time.physicsElapsed : this.frameRate;
         
         if (axis == 1 && body.allowGravity)
         {
