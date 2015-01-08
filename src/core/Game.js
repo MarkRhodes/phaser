@@ -635,19 +635,9 @@ Phaser.Game.prototype = {
     update: function (time) {
 
         this.time.update(time);
-
-        if (!this._paused && !this.pendingStep)
+        
+        if (!this._paused)
         {
-            if (this.stepping)
-            {
-                this.pendingStep = true;
-            }
-
-            if (this.config['enableDebug'])
-            {
-                this.debug.preUpdate();
-            }
-
             this.physics.preUpdate();
             this.state.preUpdate();
             this.plugins.preUpdate();
@@ -657,6 +647,7 @@ Phaser.Game.prototype = {
             this.stage.update();
             this.tweens.update();
             this.sound.update();
+            
             this.input.update();
             this.physics.update();
             this.particles.update();
@@ -668,11 +659,6 @@ Phaser.Game.prototype = {
         else
         {
             this.state.pauseUpdate();
-
-            if (this.config['enableDebug'])
-            {
-                this.debug.preUpdate();
-            }
         }
 
         if (this.renderType != Phaser.HEADLESS)

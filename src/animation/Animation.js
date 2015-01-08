@@ -49,6 +49,9 @@ Phaser.Animation = function (game, parent, name, frameData, frames, delay, loop)
     this._frames = [];
     this._frames = this._frames.concat(frames);
 
+    //If true this will just switch to the next frame..
+    this.swapFrameOnUpdate = false;
+    
     /**
     * @property {number} delay - The delay in ms between each frame of the Animation.
     */
@@ -355,28 +358,35 @@ Phaser.Animation.prototype = {
         {
             return false;
         }
-
-        if (this.isPlaying && this.game.time.now >= this._timeNextFrame)
+        
+        if (this.isPlaying && (this.game.time.now >= this._timeNextFrame || this.swapFrameOnUpdate))
         {
-            this._frameSkip = 1;
-
-            //  Lagging?
-            this._frameDiff = this.game.time.now - this._timeNextFrame;
-
-            this._timeLastFrame = this.game.time.now;
-
-            if (this._frameDiff > this.delay)
+            if (!this.swapFrameOnUpdate)
             {
-                //  We need to skip a frame, work out how many
-                this._frameSkip = Math.floor(this._frameDiff / this.delay);
-                this._frameDiff -= (this._frameSkip * this.delay);
+                this._frameSkip = 1;
+
+                //  Lagging?
+                this._frameDiff = this.game.time.now - this._timeNextFrame;
+
+                this._timeLastFrame = this.game.time.now;
+
+                if (this._frameDiff > this.delay)
+                {
+                    //  We need to skip a frame, work out how many
+                    this._frameSkip = Math.floor(this._frameDiff / this.delay);
+                    this._frameDiff -= (this._frameSkip * this.delay);
+                }
+
+                //  And what's left now?
+                this._timeNextFrame = this.game.time.now + (this.delay - this._frameDiff);
+
+                this._frameIndex += this._frameSkip;
             }
-
-            //  And what's left now?
-            this._timeNextFrame = this.game.time.now + (this.delay - this._frameDiff);
-
-            this._frameIndex += this._frameSkip;
-
+            else
+            {
+                this._frameIndex++;
+            }
+            
             if (this._frameIndex >= this._frames.length)
             {
                 if (this.loop)

@@ -19,7 +19,8 @@ Phaser.Time = function (game) {
     */
     this.game = game;
 
-    this.fakeToFrameRate = true;
+    //ms in 60fps..
+    this.msFixedBetweenFrames = 17;
     
     /**
     * @property {number} time - Game time counter. If you need a value for in-game calculation please use Phaser.Time.now instead.
@@ -227,7 +228,7 @@ Phaser.Time.prototype = {
         this.events.removeAll();
 
     },
-
+    
     /**
     * Updates the game clock and if enabled the advanced timing data. This is called automatically by Phaser.Game.
     *
@@ -237,10 +238,10 @@ Phaser.Time.prototype = {
     */
     update: function (time) {
 
-        if (this.fakeToFrameRate) {
-            time = this.now + 17; //ms in 60fps.. 
+        if (this.msFixedBetweenFrames > -1) {
+            time = this.now + this.msFixedBetweenFrames;
         }
-    
+
         this.now = time;
 
         this.timeToCall = this.game.math.max(0, 16 - (time - this.lastTime));
@@ -257,7 +258,7 @@ Phaser.Time.prototype = {
         }
 
         //  Calculate physics elapsed, ensure it's > 0, use 1/60 as a fallback
-        this.physicsElapsed = this.elapsed / 1000 || 1 / 60;
+        this.physicsElapsed = this.elapsed / 1000; //|| 1 / 60;
         
         if (this.deltaCap > 0 && this.physicsElapsed > this.deltaCap)
         {
