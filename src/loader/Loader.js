@@ -1148,51 +1148,28 @@ Phaser.Loader.prototype = {
     
     //Scales the given image by the given scale..
     _scaleImage: function (image, scale) {
-        //Adapted from http://jsfiddle.net/alnitak/j8YTe/..
-
+        var width = image.width,
+            height = image.height;
+          
         var srcCanvas = document.createElement('canvas');
-        srcCanvas.width = image.width;
-        srcCanvas.height = image.height;
+        srcCanvas.width = width;
+        srcCanvas.height = height;
 
         var srcCtx = srcCanvas.getContext('2d');
         srcCtx.drawImage(image, 0, 0);
-        var srcData = srcCtx.getImageData(0, 0, image.width, image.height).data;
-
-        var sw = image.width * scale;
-        var sh = image.height * scale;
+       
+        var sw = width * scale;
+        var sh = height * scale;
 
         var dstCanvas = document.createElement('canvas');
         dstCanvas.width = sw;
         dstCanvas.height = sh;
         var dstCtx = dstCanvas.getContext('2d');
 
-        var dstImgdata = dstCtx.createImageData(sw, sh);
-        var dstData = dstImgdata.data;
-
-        var srcP = 0;
-        var dstP = 0;
-        for (var y = 0; y < image.height; ++y) {
-            for (var i = 0; i < scale; ++i) {
-                for (var x = 0; x < image.width; ++x) {
-                    var srcP = 4 * (y * image.width + x);
-                    for (var j = 0; j < scale; ++j) {
-                        var tmp = srcP;
-                        dstData[dstP++] = srcData[tmp++];
-                        dstData[dstP++] = srcData[tmp++];
-                        dstData[dstP++] = srcData[tmp++];
-                        dstData[dstP++] = srcData[tmp++];
-                    }
-                }
-            }
-        }
-
-        dstCtx.putImageData(dstImgdata, 0, 0);
-            
-        //Need to return new one to prevent load event firing again..
-        var scaledImage = new Image();
-        scaledImage.src = dstCanvas.toDataURL('image/png');
-
-        return scaledImage;
+        dstCtx.imageSmoothingEnabled = false;
+        dstCtx.drawImage(image, 0, 0, sw, sh);
+        
+        return dstCanvas;
     },
 
     /**
