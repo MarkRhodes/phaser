@@ -1148,28 +1148,24 @@ Phaser.Loader.prototype = {
     
     //Scales the given image by the given scale..
     _scaleImage: function (image, scale) {
-        var width = image.width,
-            height = image.height;
-          
-        var srcCanvas = document.createElement('canvas');
-        srcCanvas.width = width;
-        srcCanvas.height = height;
+        var destCanvas, destContext,
+            width = image.width,
+            height = image.height,
+            scaledWidth = width * scale,
+            scaledHeight = height * scale;
+                 
+        destCanvas = document.createElement('canvas');
+        destCanvas.width = scaledWidth;
+        destCanvas.height = scaledHeight;
+        destContext = destCanvas.getContext('2d');
 
-        var srcCtx = srcCanvas.getContext('2d');
-        srcCtx.drawImage(image, 0, 0);
-       
-        var sw = width * scale;
-        var sh = height * scale;
-
-        var dstCanvas = document.createElement('canvas');
-        dstCanvas.width = sw;
-        dstCanvas.height = sh;
-        var dstCtx = dstCanvas.getContext('2d');
-
-        dstCtx.imageSmoothingEnabled = false;
-        dstCtx.drawImage(image, 0, 0, sw, sh);
+        destContext.webkitImageSmoothingEnabled = false;
+        destContext.mozImageSmoothingEnabled = false;
+        destContext.imageSmoothingEnabled = false;
         
-        return dstCanvas;
+        destContext.drawImage(image, 0, 0, scaledWidth, scaledHeight);
+        
+        return destCanvas;
     },
 
     /**
